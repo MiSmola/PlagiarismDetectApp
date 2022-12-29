@@ -33,4 +33,9 @@ public class File {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "creation_date")
     private Date creationDate;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_user")
+    private Users idUsers;
+
 }

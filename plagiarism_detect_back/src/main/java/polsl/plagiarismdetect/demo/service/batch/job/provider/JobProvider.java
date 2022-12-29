@@ -42,20 +42,20 @@ public class JobProvider {
         task.setStatus(Status.IN_PROGRESS);
 
         //FIXME: check if the query is working
-        List<File> files = fileRepository.findAllByIdNotIn(task.getSource());
-        files.forEach(file -> {
-            subtaskRepository.save(Subtask.builder()
-                    .creationDate(new Date())
-                    .source(task.getSource())
-                    .target(file.getId())
-                    .task(task)
-                    .status(Status.TODO)
-                    .build());
-        });
+//        List<File> files = fileRepository.findAllByIdNotIn(task.getSource());
+//        files.forEach(file -> {
+//            subtaskRepository.save(Subtask.builder()
+//                    .creationDate(new Date())
+//                    .source(task.getSource())
+//                    .target(file.getId())
+//                    .task(task)
+//                    .status(Status.TODO)
+//                    .build());
+//        });
 
-        task.setPopulationSize(files.size());
-        task.setPopulationProcessedSuccess(0);
-        task.setPopulationProcessedFailed(0);
-        taskRepository.save(task);
+//        task.setPopulationSize(files.size());
+//        task.setPopulationProcessedSuccess(0);
+//        task.setPopulationProcessedFailed(0);
+//        taskRepository.save(task);
     }
 }

@@ -20,27 +20,25 @@ public class Subtask {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_subtask")
     private Integer id;
 
-    @Column(name = "id_file_source")
-    private Integer source;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_file_source")
+    private File source;
 
-    @Column(name = "id_file_target")
-    private Integer target;
-
-    //TODO: To be removed - one report per Task
-    @OneToOne
-    @JoinColumn(name = "id_report")
-    private Report report;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_file_target")
+    private File target;
 
     //FIXME: change to FetchType.LAZY
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_task")
-    private Task task;
+    @JoinColumn(name = "id_task_parameter")
+    private TaskParameter taskParameter;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "finish_date")
     private Date finishDate;
 
-    private String remarks;
+    @Column(name = "remark")
+    private String remark;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "creation_date")

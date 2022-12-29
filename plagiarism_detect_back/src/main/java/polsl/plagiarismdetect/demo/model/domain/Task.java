@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -20,26 +21,36 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_task")
     private Integer id;
 
-    @Column(name = "id_file_source")
-    private Integer source;
-
-    @Column(name = "population_size")
-    private Integer populationSize;
-
-    @Column(name = "population_processed_success")
-    private Integer populationProcessedSuccess;
-
-    @Column(name = "population_processed_failed")
-    private Integer populationProcessedFailed;
-
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "finish_date")
-    private Date finishDate;
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "creation_date")
     private Date creationDate;
 
+    @Column(name = "finish_date")
+    private Date finishDate;
+
+    @Column(name = "population_processed_failed")
+    private Integer populationProcessedFailed;
+
+    @Column(name = "population_processed_success")
+    private Integer populationProcessedSuccess;
+
+    @Column(name = "population_size")
+    private Integer populationSize;
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private Status status;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_report")
+    private Report report;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_user")
+    private Users users;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_file_source")
+    private File source;
+
 }
