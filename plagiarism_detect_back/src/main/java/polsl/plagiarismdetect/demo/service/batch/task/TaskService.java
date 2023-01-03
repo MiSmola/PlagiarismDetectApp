@@ -18,10 +18,12 @@ public class TaskService {
     public Task createTask(Integer idFileSource) {
         //TODO: Handle exception in the aspects
         fileRepository.findById(idFileSource).orElseThrow(() -> new RuntimeException("File with given id: " + idFileSource + " not exists"));
-//        return taskRepository.save(Task.builder().creationDate(new Date())
-//                .status(Status.TODO)
-//                .source(idFileSource)
-//                .build());
-        return null; //tmp
+        return taskRepository.save(Task.builder()
+                .creationDate(new Date())
+                .status(Status.TODO)
+                .source(idFileSource)
+                .build());
+        //add user ID?
+//        return null; //tmp
     }
 }

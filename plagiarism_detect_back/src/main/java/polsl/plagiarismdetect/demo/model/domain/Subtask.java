@@ -20,13 +20,15 @@ public class Subtask {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_subtask")
     private Integer id;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_file_source")
-    private File source;
+//    @OneToOne(fetch = FetchType.EAGER)
+//    @JoinColumn(name = "id_file_source")
+    @Column(name = "id_file_source")
+    private Integer source;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_file_target")
-    private File target;
+//    @OneToOne(fetch = FetchType.EAGER)
+//    @JoinColumn(name = "id_file_target")
+    @Column(name = "id_file_target")
+    private Integer target;
 
     //FIXME: change to FetchType.LAZY
     @ManyToOne(fetch = FetchType.EAGER)

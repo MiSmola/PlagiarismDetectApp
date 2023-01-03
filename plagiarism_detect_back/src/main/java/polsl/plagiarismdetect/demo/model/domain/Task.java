@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.print.attribute.IntegerSyntax;
 import java.util.Date;
 import java.util.List;
 
@@ -49,8 +50,9 @@ public class Task {
     @JoinColumn(name = "id_user")
     private Users users;
 
-    @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "id_file_source")
-    private File source;
+//    @OneToOne(fetch = FetchType.EAGER)
+//    @JoinColumn(name = "id_file_source")
+    @Column(name = "id_file_source")
+    private Integer source;
 
 }
