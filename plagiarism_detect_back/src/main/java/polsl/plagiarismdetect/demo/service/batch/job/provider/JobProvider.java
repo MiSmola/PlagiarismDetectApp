@@ -11,8 +11,10 @@ import polsl.plagiarismdetect.demo.model.repository.TaskParameterRepository;
 import polsl.plagiarismdetect.demo.model.repository.TaskRepository;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -33,43 +35,64 @@ public class JobProvider {
         log.info("JobProvider.createPopulation() started");
         List<Task> tasks = taskRepository.findAllByStatusEquals(Status.TODO);
         log.info("JobProvider.createPopulation() pending tasks: " + tasks.size());
-        tasks.forEach(this::createSubTasks);
+        tasks.forEach(this::createTaskParameters);
+        tasks.forEach(this::createSubtasks);
         log.info("JobProvider.createPopulation() finished");
 
     }
 
-    private void createSubTasks(Task task) {
+
+    private void createTaskParameters(Task task) {
         task.setStatus(Status.IN_PROGRESS);
+        List<File> files = fileRepository.findAllByIdNotIn(task.getSource().getId());
+        AtomicReference<File> tmpFile = new AtomicReference<>(new File());
+        AtomicReference<Integer> previousTaskParameter = new AtomicReference<>(0);
+        AtomicReference<Integer> it = new AtomicReference<>(0);
 
-        //FIXME: check if the query is working
-        List<File> files = fileRepository.findAllByIdNotIn(task.getSource());
         files.forEach(file -> {
-            subtaskRepository.save(Subtask.builder()
-                    .creationDate(new Date())
-                    .source(task.getSource())
-                    .target(file.getId())
-                    .status(Status.TODO)
+            taskParameterRepository.save(TaskParameter.builder()
+                    .antecedent(previousTaskParameter.get())
+                    .repeat_number(2)
+                    .condition(false)
+                    .task(task)
+                    .target(file)
                     .build());
+            tmpFile.set(file);
+            List<TaskParameter> taskParameterList = taskParameterRepository.findAll();
+            if(it.get()>0){
+                taskParameterList.forEach(taskParam -> {
+                    if(taskParam.getTarget().equals(file) && task.getId().equals(taskParam.getTask().getId()))
+                        previousTaskParameter.set(taskParam.getAntecedent());
+                });
+            }
+            it.set(it.get()+1);
         });
-
         task.setPopulationSize(files.size());
         task.setPopulationProcessedSuccess(0);
         task.setPopulationProcessedFailed(0);
         taskRepository.save(task);
     }
 
-    //NEW
-    private void createTaskParameters(Task task){
-        List<File> files = fileRepository.findAllByIdNotIn(task.getSource());
-        files.forEach(file -> {
-//            taskParameterRepository.save(TaskParameter.builder()
-//                      .antecedent(1).repeat_number(2).condition(false)
-//                    .task(task).file().build());
-//                    .antecedent(1)
-//                    .repeat_number(2)
-//                    .condition(false)
-//                    .task(task)
-//                    .build());
+    private void createSubtasks(Task task){
+        List<TaskParameter> taskParameterList = taskParameterRepository.findAll();
+        AtomicReference<List<TaskParameter>> taskParametersForPresentTask = new AtomicReference<>(new ArrayList<>());
+        taskParameterList.forEach(taskParam -> {
+            if(task.getId().equals(taskParam.getTask().getId())){
+                taskParametersForPresentTask.get().add(taskParam);
+            }
         });
+        taskParametersForPresentTask.get().forEach(taskParamForPresentTask -> {
+            subtaskRepository.save(Subtask.builder()
+                    .creationDate(new Date())
+                    .numberOfAttempts(0)
+                    .taskParameter(taskParamForPresentTask)
+                    .status(Status.TODO)
+                    .source(task.getSource())
+                    .target(taskParamForPresentTask.getTarget())
+                    .build());
+        });
+
+
     }
+
 }

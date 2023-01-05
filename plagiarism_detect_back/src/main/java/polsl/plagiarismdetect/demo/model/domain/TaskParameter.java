@@ -1,10 +1,11 @@
 package polsl.plagiarismdetect.demo.model.domain;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
 
 @Data
 @AllArgsConstructor
@@ -35,9 +36,9 @@ public class TaskParameter {
     @JoinColumn(name = "id_task")
     private Task task;
 
-//    @OneToOne(fetch = FetchType.EAGER)
-//    @JoinColumn(name = "id_file_target")
-    @Column(name = "id_file_target")
-    private Integer file;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_file_target")
+//    @Column(name = "id_file_target")
+    private File target;
 
 }

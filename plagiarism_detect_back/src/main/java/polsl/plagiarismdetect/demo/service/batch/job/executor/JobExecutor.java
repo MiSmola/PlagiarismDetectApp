@@ -6,26 +6,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import polsl.plagiarismdetect.demo.model.domain.*;
-
-
-import polsl.plagiarismdetect.demo.model.domain.Comparison;
-import polsl.plagiarismdetect.demo.model.domain.File;
-import polsl.plagiarismdetect.demo.model.domain.Report;
-import polsl.plagiarismdetect.demo.model.domain.Status;
-import polsl.plagiarismdetect.demo.model.domain.Subtask;
-import polsl.plagiarismdetect.demo.model.domain.Task;
 import polsl.plagiarismdetect.demo.model.domain.demo.Result;
-import polsl.plagiarismdetect.demo.model.repository.FileRepository;
-import polsl.plagiarismdetect.demo.model.repository.ReportRepository;
-import polsl.plagiarismdetect.demo.model.repository.SubtaskRepository;
-import polsl.plagiarismdetect.demo.model.repository.TaskRepository;
+import polsl.plagiarismdetect.demo.model.repository.*;
 import polsl.plagiarismdetect.demo.service.algorithmic.pyinter.PyNativeInter;
 
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +26,7 @@ public class JobExecutor {
     private String scriptMatcher;
 
     private final SubtaskRepository subtaskRepository;
+    private final TaskParameterRepository taskParameterRepository;
     private final FileRepository fileRepository;
     private final ReportRepository reportRepository;
     private final TaskRepository taskRepository;
@@ -51,6 +39,14 @@ public class JobExecutor {
     public void run() {
         log.info("JobExecutor.run() started");
         List<Subtask> subtasks = subtaskRepository.findAllByStatusEquals(Status.TODO);
+        AtomicReference<Map<Subtask, TaskParameter>>subtaskAndTaskParameter = new AtomicReference<>(new HashMap<>());
+        subtasks.forEach(subtask -> {
+            Optional<TaskParameter> taskParamOptional = taskParameterRepository.findById(subtask.getTaskParameter().getId());
+            TaskParameter taskParam = new TaskParameter();
+            if(taskParamOptional.isPresent()) taskParam = taskParamOptional.get();
+            else log.severe("Error: empty task parameter entry!");
+            subtaskAndTaskParameter.get().put(subtask, taskParam);
+        });
         log.info("JobExecutor.run() pending subtasks: " + subtasks.size());
         if (subtasks.size() > 0) {
             report = Report.builder()
@@ -63,25 +59,25 @@ public class JobExecutor {
             reportRepository.save(report);
 
             /* updating parent task*/
-//            updateTaskDone(subtasks);
+            updateTaskDone(subtasks);
         }
         log.info("JobExecutor.run() finished");
     }
 
     private void executeSubtask(Subtask subtask) {
         try {
-//            File source = fileRepository.findById(subtask.getSource())
-//                    .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getSource() + " not exists")),
-//                    target = fileRepository.findById(subtask.getTarget())
-//                            .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getTarget() + " not exists"));
-//
-//            Result resultLeven = executeSubTaskLogic(source, target, scriptLeven);
-//            Result resultMatcher = executeSubTaskLogic(source, target, scriptMatcher);
-//            populateReport(resultLeven, resultMatcher, source, target);
-//            updateTaskSuccess(subtask);
+            File source = fileRepository.findById(subtask.getSource().getId())
+                    .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getSource() + " not exists")),
+                    target = fileRepository.findById(subtask.getTarget().getId())
+                            .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getTarget() + " not exists"));
+
+            Result resultLeven = executeSubTaskLogic(source, target, scriptLeven);
+            Result resultMatcher = executeSubTaskLogic(source, target, scriptMatcher);
+            populateReport(resultLeven, resultMatcher, source, target);
+            updateTaskSuccess(subtask);
             updateSubtaskSuccess(subtask);
         } catch (Exception e) {
-//            updateTaskFail(subtask);
+            updateTaskFail(subtask);
             updateSubtaskFail(subtask, e.getMessage());
             log.severe(e.getMessage());
         }
@@ -94,37 +90,38 @@ public class JobExecutor {
     }
 
     private void populateReport(Result resultLeven, Result resultMatcher, File source, File target) {
-//        report.getComparisons().add(Comparison.builder()
-//                .creationDate(new Date())
-//                .levenshteinCoefficient(String.valueOf(resultLeven.getValue()))
-//                .matcherCoefficient(String.valueOf(resultMatcher.getValue()))
-//                .source(source)
-//                .target(target)
-//                .build());
+        report.getComparisons().add(Comparison.builder()
+                .creationDate(new Date())
+                .levenshteinCoefficient(String.valueOf(resultLeven.getValue()))
+                .matcherCoefficient(String.valueOf(resultMatcher.getValue()))
+                .source(source)
+                .target(target)
+                .build());
     }
 
-//    private void updateTaskSuccess(Subtask subtask) {
-//        int successes = subtask.getTask().getPopulationProcessedSuccess();
-//        subtask.getTask().setPopulationProcessedSuccess(successes += 1);
-//        taskRepository.save(subtask.getTask());
-//    }
-//
-//    public void updateTaskFail(Subtask subtask) {
-//        int fails = subtask.getTask().getPopulationProcessedFailed();
-//        subtask.getTask().setPopulationProcessedFailed(fails += 1);
-//        taskRepository.save(subtask.getTask());
-//    }
-//
-//    public void updateTaskDone(List<Subtask> subtasks) {
-//        Task task = subtasks.get(0).getTask();
-//        task.setStatus(task.getPopulationProcessedFailed().equals(task.getPopulationSize()) ?
-//                Status.FAILED : Status.DONE);
-//        task.setFinishDate(new Date());
-//        taskRepository.save(task);
-//    }
+    private void updateTaskSuccess(Subtask subtask) {
+        int successes = subtask.getTaskParameter().getTask().getPopulationProcessedSuccess();
+        subtask.getTaskParameter().getTask().setPopulationProcessedSuccess(successes += 1);
+        taskRepository.save(subtask.getTaskParameter().getTask());
+    }
+
+    public void updateTaskFail(Subtask subtask) {
+        int fails = subtask.getTaskParameter().getTask().getPopulationProcessedFailed();
+        subtask.getTaskParameter().getTask().setPopulationProcessedFailed(fails += 1);
+        taskRepository.save(subtask.getTaskParameter().getTask());
+    }
+
+    public void updateTaskDone(List<Subtask> subtasks) {
+        Task task = subtasks.get(0).getTaskParameter().getTask();
+        //TODO: Tune to partially done
+        task.setStatus(task.getPopulationProcessedFailed().equals(task.getPopulationSize()) ?
+                Status.FAILED : Status.DONE);
+        task.setFinishDate(new Date());
+        taskRepository.save(task);
+    }
 
     private void updateSubtaskSuccess(Subtask subtask) {
-        // subtask.setReport(report); //TODO: org.springframework.dao.InvalidDataAccessApiUsageException: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : com.demo.plagiarismdetect.model.domain.Subtask.report -> com.demo.plagiarismdetect.model.domain.Report; nested exception is java.lang.IllegalStateException: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : com.demo.plagiarismdetect.model.domain.Subtask.report -> com.demo.plagiarismdetect.model.domain.Report
+        //subtask.setReport(report); //TODO: org.springframework.dao.InvalidDataAccessApiUsageException: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : com.demo.plagiarismdetect.model.domain.Subtask.report -> com.demo.plagiarismdetect.model.domain.Report; nested exception is java.lang.IllegalStateException: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : com.demo.plagiarismdetect.model.domain.Subtask.report -> com.demo.plagiarismdetect.model.domain.Report
         subtask.setFinishDate(new Date());
         subtask.setStatus(Status.DONE);
         subtaskRepository.save(subtask);
