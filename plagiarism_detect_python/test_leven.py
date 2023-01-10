@@ -1,7 +1,11 @@
 import Levenshtein as lev
 import sys
 
+
 Str1 = sys.argv[1]
+# Str1 = "C:/Users/djnic/OneDrive/Desktop/engineer/tests/smallFiles/test.txt"
+#
+# Str2 = "C:/Users/djnic/OneDrive/Desktop/engineer/tests/smallFiles/kiwi.txt"
 Str2 = sys.argv[2]
 
 with open(Str1, "r") as f:
@@ -12,6 +16,8 @@ with open(Str2, "r") as f:
 
 Distance = lev.distance(content1.lower(), content2.lower()),
 print(Distance[0])
+
+
 
 # Ratio = lev.ratio(Str1.lower(),Str2.lower())
 # print(Ratio)

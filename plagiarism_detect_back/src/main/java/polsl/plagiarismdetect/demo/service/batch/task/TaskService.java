@@ -35,6 +35,7 @@ public class TaskService {
         });
 
             fileRepository.save(File.builder()
+                    .creationDate(new Date())
                     .file(fileSource.getBytes())
                     .localPath(fileSource.getOriginalFilename())
                     .extension(FilenameUtils.getExtension(fileSource.getOriginalFilename()))

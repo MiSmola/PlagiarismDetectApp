@@ -29,8 +29,15 @@ public class Report {
     private Date creationDate;
 
     //FIXME: change to FetchType.LAZY
+//    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER) //FIXME: Added cascade
+//    @JoinTable(name = "report_comparison", joinColumns = @JoinColumn(name = "id_comparison"),
+//            inverseJoinColumns = @JoinColumn(name = "id_report"))
+//    private List<Comparison> comparisons; //TODO: check why initialization not working = new ArrayList<>();
+
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER) //FIXME: Added cascade
-    @JoinTable(name = "report_comparison", joinColumns = @JoinColumn(name = "id_comparison"),
-            inverseJoinColumns = @JoinColumn(name = "id_report"))
+    @JoinTable(name = "report_comparison", joinColumns = @JoinColumn(name = "id_report"),
+            inverseJoinColumns = @JoinColumn(name = "id_comparison"))
     private List<Comparison> comparisons; //TODO: check why initialization not working = new ArrayList<>();
+
+
 }
