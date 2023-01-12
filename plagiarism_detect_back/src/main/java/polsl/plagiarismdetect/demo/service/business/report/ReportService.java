@@ -34,7 +34,8 @@ public class ReportService {
                                 .targetFileCreationDate(comparison.getCreationDate())
                         .build());
             }
-            reportDtos.add(ReportDto.builder().creationDate(report.getCreationDate())
+            reportDtos.add(ReportDto.builder().id(report.getId()).title(report.getTitle())
+                    .creationDate(report.getCreationDate())
                     .comparisonDtoList(comparisonDtos)
                     .build());
         }

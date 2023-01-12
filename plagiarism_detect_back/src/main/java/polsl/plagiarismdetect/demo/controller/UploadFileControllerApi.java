@@ -9,8 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 import polsl.plagiarismdetect.demo.controller.base.FileControllerApi;
 
 @RequestMapping(value = "/api/file", produces = MediaType.APPLICATION_JSON_VALUE)
-public interface SynchronousLocalFileControllerApi extends FileControllerApi {
-    @PostMapping("/synchronous-local-file-upload")
+public interface UploadFileControllerApi extends FileControllerApi {
+    @PostMapping("/db-upload")
     ResponseEntity upload(@RequestParam("file") MultipartFile file);
 }
 

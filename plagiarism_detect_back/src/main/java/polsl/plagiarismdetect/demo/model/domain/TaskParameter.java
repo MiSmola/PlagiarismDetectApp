@@ -38,6 +38,7 @@ public class TaskParameter {
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_file_target")
+//    @Column(name = "id_file_target")
     private File target;
 
 }

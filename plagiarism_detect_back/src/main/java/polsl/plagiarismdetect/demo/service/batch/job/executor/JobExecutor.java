@@ -12,10 +12,8 @@ import polsl.plagiarismdetect.demo.service.algorithmic.pyinter.PyNativeInter;
 import polsl.plagiarismdetect.demo.service.batch.fileResolve.FileResolveService;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -44,12 +42,14 @@ public class JobExecutor {
     public void run() {
         log.info("JobExecutor.run() started");
         List<Subtask> subtasks = subtaskRepository.findAllByStatusEquals(Status.TODO);
-        List<Subtask> failedSubtasks = subtaskRepository.findAllByStatusEquals(Status.FAILED);
-        for (Subtask failedSubtask : failedSubtasks) {
-            if (failedSubtask.getTaskParameter().getRepeat_number() > 0)
-                subtasks.add(failedSubtask);
-        }
-
+        AtomicReference<Map<Subtask, TaskParameter>>subtaskAndTaskParameter = new AtomicReference<>(new HashMap<>());
+        subtasks.forEach(subtask -> {
+            Optional<TaskParameter> taskParamOptional = taskParameterRepository.findById(subtask.getTaskParameter().getId());
+            TaskParameter taskParam = new TaskParameter();
+            if(taskParamOptional.isPresent()) taskParam = taskParamOptional.get();
+            else log.severe("Error: empty task parameter entry!");
+            subtaskAndTaskParameter.get().put(subtask, taskParam);
+        });
         log.info("JobExecutor.run() pending subtasks: " + subtasks.size());
         if (subtasks.size() > 0) {
             report = Report.builder()
@@ -68,58 +68,24 @@ public class JobExecutor {
     }
 
     private void executeSubtask(Subtask subtask) {
+        try {
+            File source = fileRepository.findById(subtask.getSource().getId())
+                    .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getSource() + " not exists")),
+                    target = fileRepository.findById(subtask.getTarget().getId())
+                            .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getTarget() + " not exists"));
 
-        if (validateRetryAttepmts(subtask).get()) {
-            try {
-                File source = fileRepository.findById(subtask.getSource().getId())
-                        .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getSource() + " not exists")),
-                        target = fileRepository.findById(subtask.getTarget().getId())
-                                .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getTarget() + " not exists"));
-
-                String tmpFileSourcePath = fileResolveService.transform(source.getLocalPath(), source);
-                String tmpFileTargetPath = fileResolveService.transform(target.getLocalPath(), target);
-                Result resultLeven = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptLeven);
-                Result resultMatcher = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptMatcher);
-                populateReport(resultLeven, resultMatcher, source, target);
-
-                List<TaskParameter> taskParametersList = taskParameterRepository.findAll();
-                taskParametersList.forEach(taskParameter -> {
-                    if (subtask.getTaskParameter().equals(taskParameter)) {
-                        subtask.setNumberOfAttempts(subtask.getNumberOfAttempts() + 1);
-                        if (taskParameter.getRepeat_number() > 0) {
-                            taskParameterRepository.save(TaskParameter.builder()
-                                    .id(taskParameter.getId())
-                                    .location(taskParameter.getLocation())
-                                    .antecedent(taskParameter.getAntecedent())
-                                    .repeat_number(taskParameter.getRepeat_number() - 1)
-                                    .condition(taskParameter.isCondition())
-                                    .task(taskParameter.getTask())
-                                    .target(taskParameter.getTarget()).build());
-                        }
-                    }
-                });
-
-                updateTaskSuccess(subtask);
-                updateSubtaskSuccess(subtask);
-            } catch (Exception e) {
-                updateTaskFail(subtask);
-                updateSubtaskFail(subtask, e.getMessage());
-                log.severe(e.getMessage());
-            }
+            String tmpFileSourcePath = fileResolveService.transform(source.getLocalPath(), source);
+            String tmpFileTargetPath = fileResolveService.transform(target.getLocalPath(), target);
+            Result resultLeven = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptLeven);
+            Result resultMatcher = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptMatcher);
+            populateReport(resultLeven, resultMatcher, source, target);
+            updateTaskSuccess(subtask);
+            updateSubtaskSuccess(subtask);
+        } catch (Exception e) {
+            updateTaskFail(subtask);
+            updateSubtaskFail(subtask, e.getMessage());
+            log.severe(e.getMessage());
         }
-    }
-
-    private AtomicBoolean validateRetryAttepmts(Subtask subtask) {
-        AtomicBoolean status = new AtomicBoolean(true);
-        List<TaskParameter> taskParametersList = taskParameterRepository.findAll();
-        taskParametersList.forEach(taskParameter -> {
-            if (subtask.getTaskParameter().equals(taskParameter)) {
-                if (taskParameter.getRepeat_number().equals(0)) {
-                    status.set(false);
-                }
-            }
-        });
-        return status;
     }
 
     private Result executeSubTaskLogic(String source, String target, String script) throws IOException {
@@ -153,9 +119,8 @@ public class JobExecutor {
     public void updateTaskDone(List<Subtask> subtasks) {
         Task task = subtasks.get(0).getTaskParameter().getTask();
         //TODO: Tune to partially done
-        if(task.getPopulationProcessedFailed().equals(task.getPopulationSize())) task.setStatus(Status.FAILED);
-        else if(task.getPopulationProcessedSuccess().equals(task.getPopulationSize())) task.setStatus(Status.DONE);
-        else task.setStatus(Status.PARTIALLY_DONE);
+        task.setStatus(task.getPopulationProcessedFailed().equals(task.getPopulationSize()) ?
+                Status.FAILED : Status.DONE);
         task.setFinishDate(new Date());
         task.setReport(report);
         taskRepository.save(task);

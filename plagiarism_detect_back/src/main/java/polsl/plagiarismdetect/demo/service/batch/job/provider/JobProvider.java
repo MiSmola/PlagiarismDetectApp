@@ -45,9 +45,9 @@ public class JobProvider {
     private void createTaskParameters(Task task) {
         task.setStatus(Status.IN_PROGRESS);
         List<File> files = fileRepository.findAllByIdNotIn(task.getSource().getId());
-        //AtomicReference<File> tmpFile = new AtomicReference<>(new File());
+        AtomicReference<File> tmpFile = new AtomicReference<>(new File());
         AtomicReference<Integer> previousTaskParameter = new AtomicReference<>(0);
-        //AtomicReference<Integer> it = new AtomicReference<>(0);
+        AtomicReference<Integer> it = new AtomicReference<>(0);
 
         files.forEach(file -> {
             taskParameterRepository.save(TaskParameter.builder()
@@ -57,11 +57,15 @@ public class JobProvider {
                     .task(task)
                     .target(file)
                     .build());
+            tmpFile.set(file);
             List<TaskParameter> taskParameterList = taskParameterRepository.findAll();
-            taskParameterList.forEach(taskParam -> {
-                if(taskParam.getTarget().equals(file) && task.getId().equals(taskParam.getTask().getId()))
-                    previousTaskParameter.set(taskParam.getId());
-            });
+            if(it.get()>0){
+                taskParameterList.forEach(taskParam -> {
+                    if(taskParam.getTarget().equals(file) && task.getId().equals(taskParam.getTask().getId()))
+                        previousTaskParameter.set(taskParam.getAntecedent());
+                });
+            }
+            it.set(it.get()+1);
         });
         task.setPopulationSize(files.size());
         task.setPopulationProcessedSuccess(0);
