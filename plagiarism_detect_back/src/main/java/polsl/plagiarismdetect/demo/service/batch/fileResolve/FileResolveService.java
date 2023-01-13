@@ -19,7 +19,7 @@ public class FileResolveService {
 //            String tempFilePath = resource.toString();
 //            tempFilePath.replace("\\", "/");
             if (file.exists())// || file.isReadable())
-                return file.getAbsolutePath();
+                return file.getAbsolutePath().replace("\\", "/");
             else
                 throw new RuntimeException("Could not read the file!");
 

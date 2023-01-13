@@ -87,7 +87,13 @@
 			<artifactId>classgraph</artifactId>
 			<version>4.8.139</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 
 	<repositories>

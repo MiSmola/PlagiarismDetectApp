@@ -33,7 +33,6 @@ public class TaskService {
                 presentUser.set(user);
             }
         });
-
             fileRepository.save(File.builder()
                     .creationDate(new Date())
                     .file(fileSource.getBytes())
@@ -42,7 +41,6 @@ public class TaskService {
                     .size(fileSource.getSize())
                     .idUsers(presentUser.get())
                     .build());
-
 
         List<File> allFiles = fileRepository.findAll();
         AtomicReference<Integer> retrievedFileId = new AtomicReference<>(0);
@@ -62,20 +60,5 @@ public class TaskService {
                 .users(presentUser.get())
                 .source(sourceFile)
                 .build());
-        //add user ID
-
-
-
     }
-
-//    private Integer retrieveFileIdByParams(String originalFileName, String userEmail){
-//        //Integer retrievedUserId = 0;
-//        List<File> allFiles = fileRepository.findAll();
-//        AtomicReference<Integer> retrievedUserId = new AtomicReference<>(0);
-//        allFiles.forEach(file -> {
-//            if(file.getLocalPath() == originalFileName && file.getIdUsers().getEmail() == userEmail)
-//                retrievedUserId.set(file.getIdUsers().getId());
-//        });
-//        return retrievedUserId.get();
-//    }
 }

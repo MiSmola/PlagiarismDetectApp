@@ -84,10 +84,9 @@ const RepotView: React.FC = () => {
                                             <TableCell>Date</TableCell>
                                             <TableCell>Source file</TableCell>
                                             <TableCell align="right">Target File</TableCell>
-                                            <TableCell align="right">Levenshtein coefficient</TableCell>
-                                            <TableCell align="right">Levenshtein %</TableCell>
-                                            <TableCell align="right">Matcher coefficient</TableCell>
-                                            <TableCell align="right">Matcher %</TableCell>
+                                            <TableCell align="right">Levenshtein edit distance</TableCell>
+                                            <TableCell align="right">Jaro-Winkler coefficient</TableCell>
+                                            <TableCell align="right">Cosine similarity</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -99,9 +98,8 @@ const RepotView: React.FC = () => {
                                                 <TableCell>{historyRow.sourceFileName}</TableCell>
                                                 <TableCell align="right">{historyRow.targetFileName}</TableCell>
                                                 <TableCell align="right">{historyRow.levenshteinCoefficient}</TableCell>
-                                                <TableCell align="right">{historyRow.levenshteinCoefficientPercentage}</TableCell>
-                                                <TableCell align="right">{historyRow.matcherCoefficient}</TableCell>
-                                                <TableCell align="right">{historyRow.matcherCoefficientPercentage}</TableCell>
+                                                <TableCell align="right">{historyRow.jaroWinklerCoefficient}</TableCell>
+                                                <TableCell align="right">{historyRow.cosineSimilarity}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>

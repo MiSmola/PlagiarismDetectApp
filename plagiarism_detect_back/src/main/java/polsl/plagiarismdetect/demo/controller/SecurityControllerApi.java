@@ -1,4 +1,3 @@
-//TODO: JR NEW! - from
 package polsl.plagiarismdetect.demo.controller;
 
 import org.springframework.http.MediaType;
@@ -20,4 +19,3 @@ public interface SecurityControllerApi {
     @PostMapping(value = "/authenticate", consumes = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity authenticate(@RequestBody Users users) throws AuthenticationException, NoSuchAlgorithmException;
 }
-//TODO: JR NEW! - to

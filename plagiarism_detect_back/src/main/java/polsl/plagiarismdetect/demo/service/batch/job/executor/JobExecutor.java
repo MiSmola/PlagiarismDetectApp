@@ -12,8 +12,10 @@ import polsl.plagiarismdetect.demo.service.algorithmic.pyinter.PyNativeInter;
 import polsl.plagiarismdetect.demo.service.batch.fileResolve.FileResolveService;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +23,13 @@ import java.util.concurrent.atomic.AtomicReference;
 public class JobExecutor {
     @Value("${app.python.binpath}")
     private String python;
-    @Value("${app.python.script.leven}")
-    private String scriptLeven;
-    @Value("${app.python.script.matcher}")
-    private String scriptMatcher;
+    @Value("${app.python.script.levenshtein}")
+    private String scriptLevenshtein;
+    @Value("${app.python.script.jarowinkler}")
+    private String scriptJaroWinkler;
+
+    @Value("${app.python.script.cosine}")
+    private String scriptCosineSim;
 
     private final SubtaskRepository subtaskRepository;
     private final TaskParameterRepository taskParameterRepository;
@@ -37,19 +42,15 @@ public class JobExecutor {
 
     public Report report;
 
-    /* job executor invocation (dependent on the subtask type - if type == X_X -> invoke ServiceXX.xx) */
     @Scheduled(cron = "${app.schedule.job-executor}")
     public void run() {
         log.info("JobExecutor.run() started");
         List<Subtask> subtasks = subtaskRepository.findAllByStatusEquals(Status.TODO);
-        AtomicReference<Map<Subtask, TaskParameter>>subtaskAndTaskParameter = new AtomicReference<>(new HashMap<>());
-        subtasks.forEach(subtask -> {
-            Optional<TaskParameter> taskParamOptional = taskParameterRepository.findById(subtask.getTaskParameter().getId());
-            TaskParameter taskParam = new TaskParameter();
-            if(taskParamOptional.isPresent()) taskParam = taskParamOptional.get();
-            else log.severe("Error: empty task parameter entry!");
-            subtaskAndTaskParameter.get().put(subtask, taskParam);
-        });
+        List<Subtask> failedSubtasks = subtaskRepository.findAllByStatusEquals(Status.FAILED);
+        for (Subtask failedSubtask : failedSubtasks) {
+            if (failedSubtask.getTaskParameter().getRepeat_number() > 0)
+                subtasks.add(failedSubtask);
+        }
         log.info("JobExecutor.run() pending subtasks: " + subtasks.size());
         if (subtasks.size() > 0) {
             report = Report.builder()
@@ -68,37 +69,72 @@ public class JobExecutor {
     }
 
     private void executeSubtask(Subtask subtask) {
-        try {
-            File source = fileRepository.findById(subtask.getSource().getId())
-                    .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getSource() + " not exists")),
-                    target = fileRepository.findById(subtask.getTarget().getId())
-                            .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getTarget() + " not exists"));
 
-            String tmpFileSourcePath = fileResolveService.transform(source.getLocalPath(), source);
-            String tmpFileTargetPath = fileResolveService.transform(target.getLocalPath(), target);
-            Result resultLeven = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptLeven);
-            Result resultMatcher = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptMatcher);
-            populateReport(resultLeven, resultMatcher, source, target);
-            updateTaskSuccess(subtask);
-            updateSubtaskSuccess(subtask);
-        } catch (Exception e) {
-            updateTaskFail(subtask);
-            updateSubtaskFail(subtask, e.getMessage());
-            log.severe(e.getMessage());
+        if (validateRetryAttepmts(subtask).get()) {
+            try {
+                File source = fileRepository.findById(subtask.getSource().getId())
+                        .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getSource() + " not exists")),
+                        target = fileRepository.findById(subtask.getTarget().getId())
+                                .orElseThrow(() -> new RuntimeException("File with given id: " + subtask.getTarget() + " not exists"));
+
+                String tmpFileSourcePath = fileResolveService.transform(source.getLocalPath(), source);
+                String tmpFileTargetPath = fileResolveService.transform(target.getLocalPath(), target);
+                Result resultLeven = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptLevenshtein);
+                Result resultJaroWinkler = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptJaroWinkler);
+                Result resultCosine = executeSubTaskLogic(tmpFileSourcePath, tmpFileTargetPath, scriptCosineSim);
+                populateReport(resultLeven, resultJaroWinkler, resultCosine, source, target);
+
+                List<TaskParameter> taskParametersList = taskParameterRepository.findAll();
+                taskParametersList.forEach(taskParameter -> {
+                    if (subtask.getTaskParameter().equals(taskParameter)) {
+                        subtask.setNumberOfAttempts(subtask.getNumberOfAttempts() + 1);
+                        if (taskParameter.getRepeat_number() > 0) {
+                            taskParameterRepository.save(TaskParameter.builder()
+                                    .id(taskParameter.getId())
+                                    .location(taskParameter.getLocation())
+                                    .antecedent(taskParameter.getAntecedent())
+                                    .repeat_number(taskParameter.getRepeat_number() - 1)
+                                    .condition(taskParameter.isCondition())
+                                    .task(taskParameter.getTask())
+                                    .target(taskParameter.getTarget()).build());
+                        }
+                    }
+                });
+
+                updateTaskSuccess(subtask);
+                updateSubtaskSuccess(subtask);
+            } catch (Exception e) {
+                updateTaskFail(subtask);
+                updateSubtaskFail(subtask, e.getMessage());
+                log.severe(e.getMessage());
+            }
         }
     }
 
+    private AtomicBoolean validateRetryAttepmts(Subtask subtask) {
+        AtomicBoolean status = new AtomicBoolean(true);
+        List<TaskParameter> taskParametersList = taskParameterRepository.findAll();
+        taskParametersList.forEach(taskParameter -> {
+            if (subtask.getTaskParameter().equals(taskParameter)) {
+                if (taskParameter.getRepeat_number().equals(0)) {
+                    status.set(false);
+                }
+            }
+        });
+        return status;
+    }
+
     private Result executeSubTaskLogic(String source, String target, String script) throws IOException {
-        //TODO: "\"" introduced to handle multiply lines file
-        return Result.builder().value(Integer.parseInt(pyNativeInter.performScript(python, script,
+        return Result.builder().value(Float.parseFloat(pyNativeInter.performScript(python, script,
                 String.valueOf(source), target).get(0))).build();
     }
 
-    private void populateReport(Result resultLeven, Result resultMatcher, File source, File target) {
+    private void populateReport(Result resultLeven, Result resultJaroWinkler, Result resultCosine, File source, File target) {
         report.getComparisons().add(Comparison.builder()
                 .creationDate(new Date())
-                .levenshteinCoefficient(String.valueOf(resultLeven.getValue()))
-                .matcherCoefficient(String.valueOf(resultMatcher.getValue()))
+                        .levenshteinCoefficient(String.valueOf(resultLeven.getValue()))
+                        .jaroWinklerCoefficient(String.valueOf(resultJaroWinkler.getValue()))
+                        .cosineSimilarity(String.valueOf(resultCosine.getValue()))
                 .source(source)
                 .target(target)
                 .build());
@@ -118,16 +154,17 @@ public class JobExecutor {
 
     public void updateTaskDone(List<Subtask> subtasks) {
         Task task = subtasks.get(0).getTaskParameter().getTask();
-        //TODO: Tune to partially done
-        task.setStatus(task.getPopulationProcessedFailed().equals(task.getPopulationSize()) ?
-                Status.FAILED : Status.DONE);
+        //Tune to partially done
+        if(task.getPopulationProcessedFailed().equals(task.getPopulationSize())) task.setStatus(Status.FAILED);
+        else if(task.getPopulationProcessedSuccess().equals(task.getPopulationSize())) task.setStatus(Status.DONE);
+        else task.setStatus(Status.PARTIALLY_DONE);
         task.setFinishDate(new Date());
         task.setReport(report);
         taskRepository.save(task);
     }
 
     private void updateSubtaskSuccess(Subtask subtask) {
-        //subtask.setReport(report); //TODO: org.springframework.dao.InvalidDataAccessApiUsageException: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : com.demo.plagiarismdetect.model.domain.Subtask.report -> com.demo.plagiarismdetect.model.domain.Report; nested exception is java.lang.IllegalStateException: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : com.demo.plagiarismdetect.model.domain.Subtask.report -> com.demo.plagiarismdetect.model.domain.Report
+        //subtask.setReport(report);
         subtask.setFinishDate(new Date());
         subtask.setStatus(Status.DONE);
         subtaskRepository.save(subtask);

@@ -14,9 +14,8 @@ import java.util.Date;
 public class ComparisonDto {
     private Date comparisonCreationDate;
     private String levenshteinCoefficient;
-    private String matcherCoefficient;
-    private String matcherCoefficientPercentage;
-    private String levenshteinCoefficientPercentage;
+    private String jaroWinklerCoefficient;
+    private String cosineSimilarity;
     private String sourceFileName;
     private Date sourceFileCreationDate;
     private String targetFileName;

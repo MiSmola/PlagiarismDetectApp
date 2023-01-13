@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @Builder
 public class Result {
-    private int value;
+    private float value;
 }

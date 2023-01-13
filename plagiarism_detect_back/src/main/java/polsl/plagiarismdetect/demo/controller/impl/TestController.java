@@ -8,7 +8,7 @@ import polsl.plagiarismdetect.demo.controller.TestControllerApi;
 import polsl.plagiarismdetect.demo.model.domain.demo.Levenshtein;
 import polsl.plagiarismdetect.demo.model.domain.demo.Test;
 import polsl.plagiarismdetect.demo.service.TestService;
-import polsl.plagiarismdetect.demo.service.algorithmic.levenshtein.LevenshteinAlgorithmService;
+//import polsl.plagiarismdetect.demo.service.algorithmic.levenshtein.LevenshteinAlgorithmService;
 
 import java.io.IOException;
 
@@ -17,7 +17,7 @@ import java.io.IOException;
 @Log
 public class TestController implements TestControllerApi {
     private final TestService testService;
-    private final LevenshteinAlgorithmService levenshteinAlgorithmService;
+//    private final LevenshteinAlgorithmService levenshteinAlgorithmService;
 
     @Override
     public ResponseEntity test() {
@@ -25,11 +25,11 @@ public class TestController implements TestControllerApi {
         return ResponseEntity.ok(testService.findAll());
     }
 
-    @Override
-    public ResponseEntity levenshtein(Levenshtein levenshtein) throws IOException {
-        return ResponseEntity.ok(levenshteinAlgorithmService.levenshtein(
-                levenshtein.getSource1(), levenshtein.getSource2(), LevenshteinAlgorithmService.IMPL_TYPE.PYTHON));
-    }
+//    @Override
+//    public ResponseEntity levenshtein(Levenshtein levenshtein) throws IOException {
+//        return ResponseEntity.ok(levenshteinAlgorithmService.levenshtein(
+//                levenshtein.getSource1(), levenshtein.getSource2(), LevenshteinAlgorithmService.IMPL_TYPE.PYTHON));
+//    }
 
     @Override
     public ResponseEntity findV1(Integer id) {

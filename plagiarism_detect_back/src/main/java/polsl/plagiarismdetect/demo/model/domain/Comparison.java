@@ -26,7 +26,6 @@ public class Comparison {
     @JoinColumn(name = "id_file_source")
     private File source;
 
-    //FIXME: change to FetchType.LAZY
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_file_target")
     private File target;
@@ -34,8 +33,11 @@ public class Comparison {
     @Column(name = "levenshtein_coefficient")
     private String levenshteinCoefficient;
 
-    @Column(name = "matcher_coefficient")
-    private String matcherCoefficient;
+    @Column(name = "jaro_winkler_coefficient")
+    private String jaroWinklerCoefficient;
+
+    @Column(name = "cosine_sim")
+    private String cosineSimilarity;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "creation_date")

@@ -23,15 +23,14 @@ public class ReportService {
             List<ComparisonDto> comparisonDtos = new ArrayList<>();
             for (Comparison comparison : report.getComparisons()) {
                 comparisonDtos.add(ComparisonDto.builder()
-                                .comparisonCreationDate(comparison.getCreationDate())
+                        .comparisonCreationDate(comparison.getCreationDate())
                         .levenshteinCoefficient(comparison.getLevenshteinCoefficient())
-                        .levenshteinCoefficientPercentage(String.valueOf(Double.parseDouble(comparison.getLevenshteinCoefficient())/comparison.getSource().getSize()))
-                        .matcherCoefficient(comparison.getMatcherCoefficient())
-                        .matcherCoefficientPercentage(String.valueOf(Double.parseDouble(comparison.getMatcherCoefficient())/comparison.getTarget().getSize()))
-                                .sourceFileName(comparison.getSource().getLocalPath())
-                                .sourceFileCreationDate(comparison.getSource().getCreationDate())
-                                .targetFileName(comparison.getTarget().getLocalPath())
-                                .targetFileCreationDate(comparison.getCreationDate())
+                        .jaroWinklerCoefficient(comparison.getJaroWinklerCoefficient())
+                        .cosineSimilarity(comparison.getCosineSimilarity())
+                        .sourceFileName(comparison.getSource().getLocalPath())
+                        .sourceFileCreationDate(comparison.getSource().getCreationDate())
+                        .targetFileName(comparison.getTarget().getLocalPath())
+                        .targetFileCreationDate(comparison.getCreationDate())
                         .build());
             }
             reportDtos.add(ReportDto.builder().id(report.getId()).title(report.getTitle())
@@ -39,7 +38,6 @@ public class ReportService {
                     .comparisonDtoList(comparisonDtos)
                     .build());
         }
-//        return reportRepository.findAll();
         return reportDtos;
     }
 
