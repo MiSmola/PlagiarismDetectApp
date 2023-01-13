@@ -5,7 +5,7 @@ const upload = (file: File, onUploadProgress: any): Promise<any> => {
 
     formData.append("file", file);
 
-    return http.post("/api/file/synchronous-local-file-upload", formData, {
+    return http.post("/api/file/db-upload", formData, {
         headers: {
             "Content-Type": "multipart/form-data",
         },
@@ -13,13 +13,13 @@ const upload = (file: File, onUploadProgress: any): Promise<any> => {
     });
 };
 
-const getFiles = () : Promise<any> => {
-    return http.get("/files");
-};
+// const getFiles = () : Promise<any> => {
+//     return http.get("/files");
+// };
 
 const FileUploadService = {
     upload,
-    getFiles,
+    // getFiles,
 };
 
 export default FileUploadService;

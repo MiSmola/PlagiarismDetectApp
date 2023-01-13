@@ -13,11 +13,11 @@ const FileUpload: React.FC = () => {
     const [fileInfos, setFileInfos] = useState<Array<IFile>>([]);
     const [reportList, setReportList] = useState<Array<Report>>([]);
 
-    useEffect(() => {
-        UploadService.getFiles().then((response) => {
-            setFileInfos(response.data);
-        });
-    }, []);
+    // useEffect(() => {
+    //     UploadService.getFiles().then((response) => {
+    //         setFileInfos(response.data);
+    //     });
+    // }, []);
 
     const selectFile = (event: React.ChangeEvent<HTMLInputElement>) => {
         const {files} = event.target;
@@ -35,11 +35,11 @@ const FileUpload: React.FC = () => {
         })
             .then((response) => {
                 setMessage(response.data.message);
-                return UploadService.getFiles();
+                //return UploadService.getFiles();
             })
-            .then((files) => {
-                setFileInfos(files.data);
-            })
+            // .then((files) => {
+            //     //setFileInfos(files.data);
+            // })
             .catch((err) => {
                 setProgress(0);
 
