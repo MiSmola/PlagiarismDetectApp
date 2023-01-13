@@ -137,12 +137,16 @@ const RepotView: React.FC = () => {
             {/*        </tbody>*/}
             {/*    </Table>*/}
             {/*</Container>*/}
+            <p></p>
             <button
                 className="btn btn-success btn-sm"
                 onClick={action}
             >
+
                 Get reports
+
             </button>
+            <p></p>
             <TableContainer component={Paper}>
                 <Table aria-label="collapsible table">
                     <TableHead>

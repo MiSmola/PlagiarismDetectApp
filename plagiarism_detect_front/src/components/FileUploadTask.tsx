@@ -1,12 +1,12 @@
 import React, {useState, useEffect} from "react";
-import FileUploadService from "../services/FileUploadService";
+import FileUploadTaskService from "../services/FileUploadTaskService";
 import IFile from "../types/IFile";
 import ReportService from "../services/ReportService";
 import axios from "axios";
 import Report from "../types/Report";
 
 
-const FileUpload: React.FC = () => {
+const FileUploadTask: React.FC = () => {
     const [currentFile, setCurrentFile] = useState<File>();
     const [progress, setProgress] = useState<number>(0);
     const [message, setMessage] = useState<string>("");
@@ -26,11 +26,12 @@ const FileUpload: React.FC = () => {
         setProgress(0);
     };
 
+
     const upload = () => {
         setProgress(0);
         if (!currentFile) return;
 
-        FileUploadService.upload(currentFile, (event: any) => {
+        FileUploadTaskService.upload(currentFile, (event: any) => {
             setProgress(Math.round((100 * event.loaded) / event.total));
         })
             .then((response) => {
@@ -71,7 +72,7 @@ const FileUpload: React.FC = () => {
                         disabled={!currentFile}
                         onClick={upload}
                     >
-                        Upload to database
+                        Upload and start task
                     </button>
                 </div>
             </div>
@@ -112,4 +113,4 @@ const FileUpload: React.FC = () => {
     );
 };
 
-export default FileUpload;
+export default FileUploadTask;
