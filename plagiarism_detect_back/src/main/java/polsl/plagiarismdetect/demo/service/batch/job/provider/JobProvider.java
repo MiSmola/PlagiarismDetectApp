@@ -45,9 +45,7 @@ public class JobProvider {
     public void createTaskParameters(Task task) {
         task.setStatus(Status.IN_PROGRESS);
         List<File> files = fileRepository.findAllByIdNotIn(task.getSource().getId());
-        //AtomicReference<File> tmpFile = new AtomicReference<>(new File());
         AtomicReference<Integer> previousTaskParameter = new AtomicReference<>(0);
-        //AtomicReference<Integer> it = new AtomicReference<>(0);
 
         files.forEach(file -> {
             taskParameterRepository.save(TaskParameter.builder()

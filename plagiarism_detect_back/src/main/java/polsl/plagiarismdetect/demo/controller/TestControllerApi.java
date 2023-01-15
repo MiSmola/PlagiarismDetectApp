@@ -5,19 +5,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import polsl.plagiarismdetect.demo.model.domain.demo.Test;
 
-@RequestMapping(value = "/api/test", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/db-test", produces = MediaType.APPLICATION_JSON_VALUE)
 public interface TestControllerApi {
     @GetMapping
-    ResponseEntity test();
+    ResponseEntity testGetAll();
 
-//    @PostMapping("/levenshteinV1")
-//    ResponseEntity levenshtein(@RequestBody Levenshtein levenshtein) throws IOException;
+    @GetMapping("/find-by-id/{id}")
+    ResponseEntity testFindById(@PathVariable Integer id);
 
-    @GetMapping("/findV1/{id}")
-    ResponseEntity findV1(@PathVariable Integer id);
-
-    @GetMapping("/findV2")
-    ResponseEntity findV2(@RequestParam Integer id, @RequestParam String name);
+    @GetMapping("/find-by-id-name")
+    ResponseEntity testFindByIdAndName(@RequestParam Integer id, @RequestParam String name);
 
     @PostMapping
     ResponseEntity save(@RequestBody Test test);

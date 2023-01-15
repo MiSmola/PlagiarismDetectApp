@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import polsl.plagiarismdetect.demo.model.domain.*;
 import polsl.plagiarismdetect.demo.model.domain.demo.Result;
 import polsl.plagiarismdetect.demo.model.repository.*;
-import polsl.plagiarismdetect.demo.service.algorithmic.pyinter.PyNativeInter;
+import polsl.plagiarismdetect.demo.service.algorithmic.pyinter.NativePython;
 import polsl.plagiarismdetect.demo.service.batch.fileResolve.FileResolveService;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class JobExecutor {
     private final FileRepository fileRepository;
     private final ReportRepository reportRepository;
     private final TaskRepository taskRepository;
-    private final PyNativeInter pyNativeInter;
+    private final NativePython nativePython;
 
     private FileResolveService fileResolveService = new FileResolveService();
 
@@ -125,7 +125,7 @@ public class JobExecutor {
     }
 
     private Result executeSubTaskLogic(String source, String target, String script) throws IOException {
-        return Result.builder().value(Float.parseFloat(pyNativeInter.performScript(python, script,
+        return Result.builder().value(Float.parseFloat(nativePython.performScript(python, script,
                 String.valueOf(source), target).get(0))).build();
     }
 

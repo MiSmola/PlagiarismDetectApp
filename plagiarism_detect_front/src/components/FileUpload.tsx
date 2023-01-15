@@ -61,7 +61,7 @@ const FileUpload: React.FC = () => {
             <div className="row">
                 <div className="col-8">
                     <label className="btn btn-default p-0">
-                        <input type="file" onChange={selectFile}/>
+                        <input type="file" accept={".txt, .docx, .pdf, .doc, .java, .cpp, .h, .py, .c"} onChange={selectFile}/>
                     </label>
                 </div>
 

@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service("SimplePyNativeInterService")
 @Log
-public class SimplePyNativeInterService implements PyNativeInter {
+public class PythonBatchJobService implements NativePython {
     public List<String> performScript(String python, String script, String... params) throws IOException {
         return executeScript(python, script, params);
     }
