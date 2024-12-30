@@ -7,7 +7,7 @@ The Plagiarism Detection Application is designed to identify potential cases of 
 - **Database**: PostgreSQL relational database.
 - **Frontend**: TypeScript with React JS.
 - **Batch Processing**: Python for file comparison.
-- **Communication**: REST API between modules.
+- **Communication**: REST API.
 
 ## Features
 - Upload documents for plagiarism analysis.
@@ -96,6 +96,10 @@ The application is built on a modular architecture where:
   - **Response**: Status message
 
 ---
+### API Class Diagram
+![API Class Diagram](doc/api_class_diagram.svg)
+
+---
 
 ## Custom Message Queue
 The process of comparing the contents of files is carried out under the control of a queue of its own implementation. The designed queue works as follows:
@@ -120,6 +124,9 @@ Jaro-Winkler is a similarity metric that accounts for the number of matching cha
 ### 3. Cosine Similarity
 Cosine Similarity calculates the cosine of the angle between two vectors in a multi-dimensional space, often used for comparing text by converting it into a vector space model (e.g., TF-IDF).
 
+---
+## Business Class Diagram
+![Business Class Diagram](doc/business_class_diagram.svg)
 ---
 ## Database Schema
 ![Database Schema](doc/db_schema.png)
